@@ -1,0 +1,95 @@
+BUSINESS IMPACT METRICS - REAL vs MADE UP
+==========================================
+
+✅ REAL DATA:
+-------------
+
+1. Product Prices
+CODE:
+    COALESCE(p."ProductPrice", 50) as unit_price
+PROOF: Pulled from Product_Lookup.ProductPrice column in database
+
+
+2. Product Costs  
+CODE:
+    COALESCE(p."ProductCost", p."ProductPrice" * 0.6, 30) as unit_cost
+PROOF: Pulled from Product_Lookup.ProductCost column (fallback: 60% of price if missing)
+
+
+3. Current Stock Levels
+CODE:
+    stocks = int(product_rows.iloc[0]["Stock"])
+PROOF: From stock_table database, real inventory numbers
+
+
+4. Forecast Predictions
+CODE:
+    forecast_lower_limit = sum(forecast_data.iloc[:4]["Lower 80%"])
+    forecast_upper_limit = sum(forecast_data.iloc[:4]["Upper 80%"])
+PROOF: From your Holt-Winters ML model output (top10_products_forecast_results.csv)
+
+
+5. Actual Sales Data
+CODE:
+    last_4_weeks_sale = sum(sales_data.iloc[-4:]["sum"])
+PROOF: From your historical sales CSV (top10_product_ts.csv)
+
+
+6. Forecast Accuracy (MAPE)
+CODE:
+    mape = np.mean(np.abs((actual_last_4 - forecast_median) / np.maximum(actual_last_4, 1))) * 100
+PROOF: Real calculation comparing actual vs predicted sales
+
+
+
+🔴 MADE UP / ESTIMATED:
+-----------------------
+
+1. Emergency Orders Per Product
+CODE:
+    emergency_orders_prevented = stockout_metrics["products_at_risk"] * 2
+                                                                         ^^^
+MADE UP: Assumes 2 emergency orders per at-risk product per month
+NO HISTORICAL DATA: Would need past emergency order logs
+
+
+2. Emergency Order Extra Cost
+CODE:
+    avg_emergency_order_cost = 100
+                               ^^^
+MADE UP: Assumes $100 extra cost per emergency order
+NO HISTORICAL DATA: Would need actual rush shipping invoices
+
+
+3. Carrying Cost Rate
+CODE:
+    annual_carrying_cost_saved = excess_inventory_value * 0.25
+                                                          ^^^^
+MADE UP: Uses 25% (industry standard)
+REAL WOULD NEED: Warehouse rent, insurance, opportunity cost data
+
+
+4. USD to MYR Conversion (Frontend)
+CODE:
+    const USD_TO_MYR = 4.47;
+                       ^^^^
+MADE UP: Hardcoded exchange rate
+REAL WOULD NEED: Live exchange rate API
+
+
+
+📊 SUMMARY:
+-----------
+REAL (6 things):
+- Product prices
+- Product costs  
+- Stock levels
+- ML forecasts
+- Historical sales
+- Forecast accuracy
+
+MADE UP (4 things):
+- Emergency order frequency (× 2)
+- Emergency order cost ($100)
+- Carrying cost rate (25%)
+- Exchange rate (4.47)

@@ -1,0 +1,15 @@
+fastapi
+uvicorn
+jinja2
+python-multipart
+fastapi-mail
+psycopg2-binary
+pandas
+numpy
+python-dotenv
+google-generativeai
+pydantic
+openpyxl
+python-pptx
+python-docx
+aiofiles
