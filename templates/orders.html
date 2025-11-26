@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Volume Forecast - AdventureWorks AI</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col relative">
+
+    <!-- Navbar -->
+    <nav class="bg-white/80 backdrop-blur-md shadow-sm border-b border-slate-200 sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-14">
+                <a href="/main_page" class="flex items-center gap-3 hover:opacity-80 transition-opacity">
+                    <div class="bg-gradient-to-br from-blue-600 to-indigo-600 text-white p-1.5 rounded-lg shadow-md shadow-blue-500/30">
+                        <i class="fa-solid fa-layer-group text-sm"></i>
+                    </div>
+                    <span class="font-bold text-lg tracking-tight text-slate-900">AdventureWorks <span class="text-blue-600">AI</span></span>
+                </a>
+                <div class="flex items-center">
+                    <a href="/main_page" class="text-sm font-bold text-slate-500 hover:text-blue-600 transition-colors">
+                        <i class="fa-solid fa-arrow-left mr-1"></i> Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+        
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Total Orders Forecast</h1>
+            <p class="mt-1 text-slate-500">Weekly order volume analysis and workforce planning.</p>
+        </div>
+
+        <!-- Layout Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- LEFT: Chart Section (Spans 2 cols) -->
+            <div class="lg:col-span-2 bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 p-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
+                    <h2 class="text-lg font-bold text-slate-800">Predicted Order Volume</h2>
+                    <div class="flex flex-wrap gap-3 text-xs font-semibold">
+                        <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-blue-600"></span>Actual Orders</span>
+                        <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-orange-500"></span>Forecast</span>
+                        <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-orange-200"></span>Confidence Interval</span>
+                    </div>
+                </div>
+                <div class="relative w-full h-[450px]">
+                    <!-- Loading Spinner -->
+                    <div id="chart-loader" class="absolute inset-0 flex items-center justify-center bg-white z-10">
+                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                    </div>
+                    <canvas id="ordersChart"></canvas>
+                </div>
+            </div>
+
+            <!-- RIGHT: Insight & Action Section -->
+            <div class="lg:col-span-1 space-y-6">
+                
+                <!-- Insight Card -->
+                <div id="insight-card" class="bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 p-6 flex flex-col h-full relative overflow-hidden">
+                    
+                    <div id="insight-loader" class="flex justify-center items-center h-40">
+                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-300"></div>
+                    </div>
+
+                    <!-- Dynamic Content injected here -->
+                    <div id="insight-content" class="hidden h-full flex flex-col"></div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- Dynamic AI Schedule Modal -->
+    <div id="ai-modal" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <!-- Backdrop -->
+        <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity opacity-0" id="modal-backdrop"></div>
+        
+        <div class="fixed inset-0 z-10 overflow-y-auto">
+            <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+                
+                <!-- Modal Panel -->
+                <div class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-2xl scale-95 opacity-0" id="modal-panel">
+                    
+                    <!-- Content Container (Inject HTML here based on state) -->
+                    <div id="modal-dynamic-content" class="p-6">
+                        <!-- Content injected via JS -->
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script -->
+    <script>
+        // Global variable to hold the fetched schedule for downloading
+        let currentScheduleData = null;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                // 1. Fetch Data
+                const response = await fetch('/linegraph_endpoint_orders');
+                const data = await response.json();
+
+                // 2. Render Chart
+                renderOrderChart(data);
+
+                // 3. Process Logic for Insight Panel
+                processInsights(data);
+
+            } catch (error) {
+                console.error("Error loading order data:", error);
+                document.getElementById('insight-content').innerHTML = `<p class="text-rose-500 font-bold">Failed to load data.</p>`;
+                document.getElementById('insight-loader').classList.add('hidden');
+                document.getElementById('insight-content').classList.remove('hidden');
+            }
+        });
+
+        function renderOrderChart(data) {
+            const ctx = document.getElementById('ordersChart').getContext('2d');
+            const loader = document.getElementById('chart-loader');
+
+            // --- Data Parsing ---
+            const histPoints = data.historical_data.map(d => ({ x: d.order_date, y: d.total_orders }));
+            const lastHistDate = histPoints[histPoints.length - 1].x;
+            const lastHistVal = histPoints[histPoints.length - 1].y;
+
+            const medianPoints = [{ x: lastHistDate, y: lastHistVal }, ...data.forecasted_data.map(d => ({ x: d.Week, y: d["Median Forecast"] }))];
+            const upper95Points = [{x: lastHistDate, y: lastHistVal}, ...data.forecasted_data.map(d => ({x: d.Week, y: d["Upper 95%"]}))];
+            const lower95Points = [{x: lastHistDate, y: lastHistVal}, ...data.forecasted_data.map(d => ({x: d.Week, y: d["Lower 95%"]}))];
+            const upper80Points = [{x: lastHistDate, y: lastHistVal}, ...data.forecasted_data.map(d => ({x: d.Week, y: d["Upper 80%"]}))];
+            const lower80Points = [{x: lastHistDate, y: lastHistVal}, ...data.forecasted_data.map(d => ({x: d.Week, y: d["Lower 80%"]}))];
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    datasets: [
+                        { label: 'Actual Orders', data: histPoints, borderColor: '#2563EB', backgroundColor: '#2563EB', borderWidth: 2, tension: 0.2, pointRadius: 1 },
+                        { label: 'Forecast (Median)', data: medianPoints, borderColor: '#F97316', backgroundColor: '#F97316', borderWidth: 2, borderDash: [6, 4], tension: 0.2, pointRadius: 0 },
+                        { label: 'Upper 95%', data: upper95Points, borderColor: 'transparent', pointRadius: 0, fill: false },
+                        { label: '95% Confidence', data: lower95Points, borderColor: 'transparent', backgroundColor: 'rgba(255, 237, 213, 0.5)', pointRadius: 0, fill: '-1' },
+                        { label: 'Upper 80%', data: upper80Points, borderColor: 'transparent', pointRadius: 0, fill: false },
+                        { label: '80% Confidence', data: lower80Points, borderColor: 'transparent', backgroundColor: 'rgba(253, 186, 116, 0.5)', pointRadius: 0, fill: '-1' }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { type: 'time', time: { unit: 'month' }, grid: { display: false } },
+                        y: { grid: { color: '#f1f5f9' }, title: { display: true, text: 'Total Orders' } }
+                    },
+                    plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false } }
+                }
+            });
+            loader.classList.add('hidden');
+        }
+
+        function processInsights(data) {
+            const container = document.getElementById('insight-content');
+            const loader = document.getElementById('insight-loader');
+            
+            const histData = data.historical_data;
+            const last4Hist = histData.slice(-4);
+            const sumHist = last4Hist.reduce((acc, curr) => acc + curr.total_orders, 0);
+            const avgHist = sumHist / last4Hist.length;
+
+            const foreData = data.forecasted_data;
+            const first4Fore = foreData.slice(0, 4);
+            const sumFore = first4Fore.reduce((acc, curr) => acc + curr["Median Forecast"], 0);
+            const avgFore = sumFore / first4Fore.length;
+
+            const avgHistDisp = Math.round(avgHist);
+            const avgForeDisp = Math.round(avgFore);
+            const diff = avgForeDisp - avgHistDisp;
+            const isBusy = avgFore > avgHist;
+
+            loader.classList.add('hidden');
+            container.classList.remove('hidden');
+
+            if (isBusy) {
+                const increasePercent = ((diff / avgHistDisp) * 100).toFixed(1);
+                container.innerHTML = `
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-orange-500 to-red-500"></div>
+                    <div class="mb-4">
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-orange-100 text-orange-700 border border-orange-200 mb-2 uppercase tracking-wide">
+                            <i class="fa-solid fa-arrow-trend-up"></i> High Demand
+                        </span>
+                        <h3 class="text-xl font-bold text-slate-900 leading-tight">Busy Month Ahead</h3>
+                    </div>
+                    <div class="space-y-4 mb-6">
+                        <div class="bg-slate-50 rounded-xl p-4 border border-slate-100">
+                             <div class="grid grid-cols-2 gap-4 text-center divide-x divide-slate-200">
+                                <div>
+                                    <p class="text-[10px] text-slate-400 font-bold uppercase">Past 4 Wks Avg</p>
+                                    <p class="text-lg font-bold text-slate-700">${avgHistDisp}</p>
+                                </div>
+                                <div>
+                                    <p class="text-[10px] text-slate-400 font-bold uppercase">Next 4 Wks Avg</p>
+                                    <p class="text-lg font-bold text-orange-600">${avgForeDisp}</p>
+                                </div>
+                             </div>
+                        </div>
+                        <p class="text-sm font-medium text-slate-600">
+                            Forecast models predict a <span class="text-orange-600 font-bold">+${increasePercent}%</span> increase in order volume compared to the previous month.
+                        </p>
+                    </div>
+                    <div id="action-container" class="mt-auto bg-orange-50 rounded-xl p-4 border border-orange-100">
+                        <p class="text-sm font-bold text-orange-800 mb-3 text-center leading-snug">
+                            Next month is predicted to be busier. Would you like to rearrange staff schedules?
+                        </p>
+                        <div class="grid grid-cols-2 gap-3">
+                            <button onclick="alert('No action taken.')" class="py-2 rounded-lg border border-orange-200 bg-white text-orange-800 text-xs font-bold hover:bg-orange-50 transition-colors">No</button>
+                            <!-- UPDATED: Call fetchAndDisplaySchedule() -->
+                            <button onclick="fetchAndDisplaySchedule()" class="py-2 rounded-lg bg-orange-600 text-white text-xs font-bold shadow-md shadow-orange-500/20 hover:bg-orange-700 transition-colors">
+                                Yes, Rearrange
+                            </button>
+                        </div>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = `
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-blue-400 to-indigo-500"></div>
+                    <div class="mb-4">
+                         <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700 border border-blue-200 mb-2 uppercase tracking-wide">
+                            <i class="fa-solid fa-check"></i> Stable
+                        </span>
+                        <h3 class="text-xl font-bold text-slate-900 leading-tight">Standard Volume</h3>
+                    </div>
+                    <div class="bg-blue-50/50 rounded-xl p-4 border border-blue-100 mb-6">
+                        <div class="grid grid-cols-2 gap-4 text-center divide-x divide-blue-200">
+                            <div><p class="text-[10px] text-slate-400 font-bold uppercase">Past 4 Wks Avg</p><p class="text-lg font-bold text-slate-700">${avgHistDisp}</p></div>
+                            <div><p class="text-[10px] text-slate-400 font-bold uppercase">Next 4 Wks Avg</p><p class="text-lg font-bold text-blue-600">${avgForeDisp}</p></div>
+                        </div>
+                    </div>
+                    <div class="mt-auto">
+                         <p class="text-sm text-slate-500 mb-4">Predicted order volume is stable. Workforce capacity sufficient.</p>
+                        <button class="w-full py-2.5 rounded-lg border border-slate-200 text-slate-400 font-bold cursor-not-allowed bg-slate-50 text-xs" disabled>No Schedule Changes Needed</button>
+                    </div>
+                `;
+            }
+        }
+
+        // --- NEW MODAL & AI LOGIC ---
+        const modal = document.getElementById('ai-modal');
+        const modalBackdrop = document.getElementById('modal-backdrop');
+        const modalPanel = document.getElementById('modal-panel');
+        const modalContent = document.getElementById('modal-dynamic-content');
+
+        function openModal() {
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modalBackdrop.classList.remove('opacity-0');
+                modalPanel.classList.remove('scale-95', 'opacity-0');
+                modalPanel.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        function closeModal() {
+            modalBackdrop.classList.add('opacity-0');
+            modalPanel.classList.remove('scale-100', 'opacity-100');
+            modalPanel.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modalContent.innerHTML = ''; // Clear content
+            }, 300);
+        }
+
+        async function fetchAndDisplaySchedule() {
+            openModal();
+            
+            // 1. LOADING STATE
+            modalContent.innerHTML = `
+                <div class="flex flex-col items-center justify-center py-10 px-4 text-center">
+                    <div class="relative mb-6">
+                        <div class="h-16 w-16 rounded-full border-4 border-slate-100 border-t-orange-500 animate-spin"></div>
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <i class="fa-solid fa-robot text-orange-500 text-xl"></i>
+                        </div>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-900 mb-2">AI is Optimizing Schedule</h3>
+                    <p class="text-slate-500 max-w-sm">Please wait while our Generative AI model analyzes staff availability and predicted order volume to create a balanced roster...</p>
+                </div>
+            `;
+
+            try {
+                // 2. FETCH FROM API
+                const response = await fetch('/adjust_schedule');
+                const data = await response.json();
+                
+                // Store data globally for download function
+                currentScheduleData = data.schedule;
+
+                // 3. RENDER TABLE (PREVIEW STATE)
+                renderScheduleTable(data.schedule);
+
+            } catch (error) {
+                console.error("AI Schedule Error:", error);
+                modalContent.innerHTML = `
+                    <div class="text-center py-8">
+                        <div class="h-12 w-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <i class="fa-solid fa-triangle-exclamation text-xl"></i>
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-900">Error Generating Schedule</h3>
+                        <p class="text-sm text-slate-500 mb-4">Something went wrong while communicating with the AI model.</p>
+                        <button onclick="closeModal()" class="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg font-bold text-sm hover:bg-slate-200">Close</button>
+                    </div>
+                `;
+            }
+        }
+
+        function renderScheduleTable(schedule) {
+            // Generate Rows
+            const rows = schedule.map(row => `
+                <tr class="border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors">
+                    <td class="p-3 font-bold text-slate-800 text-sm whitespace-nowrap">${row.Day}</td>
+                    <td class="p-3 text-slate-600 text-xs">${row['Shift A (10–4)']}</td>
+                    <td class="p-3 text-slate-600 text-xs">${row['Shift B (2–8)']}</td>
+                </tr>
+            `).join('');
+
+            modalContent.innerHTML = `
+                <div class="flex items-center justify-between mb-4 border-b border-slate-100 pb-4">
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-900">New Optimized Schedule</h3>
+                        <p class="text-xs text-slate-500">Generated based on predicted demand.</p>
+                    </div>
+                    <span class="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wide">
+                        <i class="fa-solid fa-check mr-1"></i> AI Generated
+                    </span>
+                </div>
+
+                <div class="overflow-x-auto rounded-lg border border-slate-200 mb-6 max-h-[400px]">
+                    <table class="w-full text-left">
+                        <thead class="bg-slate-50 text-slate-500 text-xs uppercase font-bold sticky top-0">
+                            <tr>
+                                <th class="p-3 border-b border-slate-200">Day</th>
+                                <th class="p-3 border-b border-slate-200">Shift A (10–4)</th>
+                                <th class="p-3 border-b border-slate-200">Shift B (2–8)</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            ${rows}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="bg-slate-50 -mx-6 -mb-6 p-4 px-6 rounded-b-2xl border-t border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4">
+                    <p class="text-sm font-semibold text-slate-700">Do you want to download this schedule?</p>
+                    <div class="flex gap-3 w-full sm:w-auto">
+                        <button onclick="closeModal()" class="flex-1 sm:flex-none px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg font-bold text-sm hover:bg-slate-50 transition-colors">
+                            Cancel
+                        </button>
+                        <button onclick="downloadCSV()" class="flex-1 sm:flex-none px-4 py-2 bg-blue-600 text-white rounded-lg font-bold text-sm hover:bg-blue-700 shadow-md shadow-blue-500/20 transition-colors flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-download"></i> Download CSV
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function downloadCSV() {
+            if (!currentScheduleData) return;
+
+            // Define headers
+            const headers = ['Day', 'Shift A (10–4)', 'Shift B (2–8)'];
+            
+            // Map data to CSV format (Handle commas in names by wrapping in quotes)
+            const csvRows = [
+                headers.join(','), 
+                ...currentScheduleData.map(row => {
+                    const day = `"${row.Day}"`;
+                    const shiftA = `"${row['Shift A (10–4)']}"`;
+                    const shiftB = `"${row['Shift B (2–8)']}"`;
+                    return [day, shiftA, shiftB].join(',');
+                })
+            ];
+
+            const csvString = csvRows.join('\n');
+            const blob = new Blob([csvString], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.setAttribute('href', url);
+            a.setAttribute('download', 'AI_Optimized_Schedule.csv');
+            a.click();
+            
+            closeModal();
+        }
+
+    </script>
+</body>
+</html>

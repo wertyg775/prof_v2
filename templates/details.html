@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Details - AI Forecast</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        /* Simple animation for the success message */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col relative">
+
+    <!-- Navbar -->
+    <nav class="bg-white/80 backdrop-blur-md shadow-sm border-b border-slate-200 sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-14">
+                <!-- Branding (Clickable to go home) -->
+                <a href="/main_page" class="flex items-center gap-3 hover:opacity-80 transition-opacity">
+                    <div class="bg-gradient-to-br from-blue-600 to-indigo-600 text-white p-1.5 rounded-lg shadow-md shadow-blue-500/30">
+                        <i class="fa-solid fa-layer-group text-sm"></i>
+                    </div>
+                    <span class="font-bold text-lg tracking-tight text-slate-900">AdventureWorks <span class="text-blue-600">AI</span></span>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+        
+        <!-- Header -->
+        <div class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+                <h1 id="page-title" class="text-3xl font-extrabold text-slate-900 tracking-tight">Loading...</h1>
+                <p class="mt-1 text-slate-500">Historical performance & future demand projection.</p>
+            </div>
+            <!-- Restock Status Badge (injected via JS) -->
+            <div id="header-badge"></div>
+        </div>
+
+        <!-- Layout Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- LEFT: Chart Section (Spans 2 cols) -->
+            <div class="lg:col-span-2 bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-lg font-bold text-slate-800">Sales Forecast Analysis</h2>
+                    <div class="flex gap-4 text-xs font-semibold">
+                        <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-blue-600"></span>Historical</span>
+                        <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-orange-500"></span>Median Forecast</span>
+                        <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-orange-200"></span>80% CI</span>
+                    </div>
+                </div>
+                <div class="relative w-full h-[400px]">
+                    <canvas id="forecastChart"></canvas>
+                </div>
+            </div>
+
+            <!-- RIGHT: Info & Action Section -->
+            <div class="lg:col-span-1 space-y-6">
+                
+                <!-- Stock Info Card -->
+                <div id="action-card" class="bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 p-6 flex flex-col h-full relative overflow-hidden">
+                    <div id="loading-details" class="flex justify-center items-center h-40">
+                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                    </div>
+                    <!-- Content injected via JS -->
+                    <div id="details-content" class="hidden h-full flex flex-col">
+                        <!-- Dynamic content goes here -->
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- Restock Modal (Hidden by default) -->
+    <div id="restock-modal" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <!-- Backdrop -->
+        <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity opacity-0" id="modal-backdrop"></div>
+
+        <div class="fixed inset-0 z-10 overflow-y-auto">
+            <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+                
+                <!-- Modal Panel -->
+                <div class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-md scale-95 opacity-0" id="modal-panel">
+                    
+                    <div class="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+                        <div class="sm:flex sm:items-start">
+                            <div class="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-blue-100 sm:mx-0 sm:h-10 sm:w-10">
+                                <i class="fa-solid fa-cart-plus text-blue-600"></i>
+                            </div>
+                            <div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left w-full">
+                                <h3 class="text-lg font-bold leading-6 text-slate-900" id="modal-title">Confirm Restock Order</h3>
+                                <div class="mt-2">
+                                    <p class="text-sm text-slate-500">
+                                        Sending request to supplier for <span id="modal-product-name" class="font-bold text-slate-800"></span>.
+                                    </p>
+                                    
+                                    <div class="mt-4">
+                                        <label for="quantity" class="block text-xs font-bold text-slate-700 uppercase mb-1">Quantity Needed</label>
+                                        <input type="number" id="quantity" name="quantity" min="1" placeholder="e.g. 50" 
+                                            class="w-full rounded-lg border-slate-300 border p-2.5 text-slate-900 focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none shadow-sm transition-all">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-slate-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6 border-t border-slate-100">
+                        <button type="button" id="confirm-restock-btn" class="inline-flex w-full justify-center rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 sm:ml-3 sm:w-auto transition-colors">
+                            Send Request
+                        </button>
+                        <button type="button" id="cancel-modal-btn" class="mt-3 inline-flex w-full justify-center rounded-lg bg-white px-3 py-2 text-sm font-semibold text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50 sm:mt-0 sm:w-auto transition-colors">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Logic -->
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            // 1. Get Product from URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const product = urlParams.get('product');
+
+            if (!product) {
+                alert("No product specified.");
+                window.location.href = '/main_page';
+                return;
+            }
+
+            // Update Titles
+            document.getElementById('page-title').textContent = product;
+            document.getElementById('modal-product-name').textContent = product;
+
+            try {
+                // 2. Fetch Data in Parallel
+                const [graphRes, stockRes] = await Promise.all([
+                    fetch(`/linegraph_endpoint?product=${encodeURIComponent(product)}`),
+                    fetch(`/restock_or_not?product=${encodeURIComponent(product)}`)
+                ]);
+
+                const graphData = await graphRes.json();
+                const stockData = await stockRes.json();
+
+                // 3. Render Chart
+                renderChart(graphData);
+
+                // 4. Render Details/Restock Logic
+                renderDetails(product, stockData);
+
+            } catch (error) {
+                console.error("Error loading data:", error);
+                document.getElementById('details-content').innerHTML = `<p class="text-red-500">Error loading data.</p>`;
+            }
+        });
+
+        // --- Chart Logic ---
+        function renderChart(data) {
+            const ctx = document.getElementById('forecastChart').getContext('2d');
+
+            const histLabels = data.historical_data.map(d => d.week_year_dt);
+            const histValues = data.historical_data.map(d => d.sum);
+
+            const forecastLabels = data.forecasted_data.map(d => d.Week);
+            const forecastMedian = data.forecasted_data.map(d => d["Median Forecast"]);
+            const upper80 = data.forecasted_data.map(d => d["Upper 80%"]);
+            const lower80 = data.forecasted_data.map(d => d["Lower 80%"]);
+            const upper95 = data.forecasted_data.map(d => d["Upper 95%"]);
+            const lower95 = data.forecasted_data.map(d => d["Lower 95%"]);
+
+            const lastHistDate = histLabels[histLabels.length - 1];
+            const lastHistVal = histValues[histValues.length - 1];
+
+            // Forecast points (include last hist point to connect lines)
+            const forecastMedianPoints = [
+                { x: lastHistDate, y: lastHistVal },
+                ...data.forecasted_data.map(d => ({ x: d.Week, y: d["Median Forecast"] }))
+            ];
+            const ci95UpperPoints = [{x: lastHistDate, y: lastHistVal}, ...data.forecasted_data.map(d => ({x: d.Week, y: d["Upper 95%"]}))];
+            const ci95LowerPoints = [{x: lastHistDate, y: lastHistVal}, ...data.forecasted_data.map(d => ({x: d.Week, y: d["Lower 95%"]}))];
+            const ci80UpperPoints = [{x: lastHistDate, y: lastHistVal}, ...data.forecasted_data.map(d => ({x: d.Week, y: d["Upper 80%"]}))];
+            const ci80LowerPoints = [{x: lastHistDate, y: lastHistVal}, ...data.forecasted_data.map(d => ({x: d.Week, y: d["Lower 80%"]}))];
+            const histDataPoints = data.historical_data.map(d => ({ x: d.week_year_dt, y: d.sum }));
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    datasets: [
+                        {
+                            label: 'Historical Data',
+                            data: histDataPoints,
+                            borderColor: '#2563EB',
+                            backgroundColor: '#2563EB',
+                            borderWidth: 2,
+                            tension: 0.1,
+                            pointRadius: 0
+                        },
+                        {
+                            label: 'Median Forecast',
+                            data: forecastMedianPoints,
+                            borderColor: '#F97316',
+                            backgroundColor: '#F97316',
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            tension: 0.1,
+                            pointRadius: 4,
+                            pointBackgroundColor: '#F97316'
+                        },
+                        {
+                            label: 'Upper 95%',
+                            data: ci95UpperPoints,
+                            borderColor: 'transparent',
+                            pointRadius: 0,
+                            fill: false
+                        },
+                        {
+                            label: '95% CI',
+                            data: ci95LowerPoints,
+                            borderColor: 'transparent',
+                            backgroundColor: 'rgba(255, 237, 213, 0.4)',
+                            pointRadius: 0,
+                            fill: '-1'
+                        },
+                        {
+                            label: 'Upper 80%',
+                            data: ci80UpperPoints,
+                            borderColor: 'transparent',
+                            pointRadius: 0,
+                            fill: false
+                        },
+                        {
+                            label: '80% CI',
+                            data: ci80LowerPoints,
+                            borderColor: 'transparent',
+                            backgroundColor: 'rgba(253, 186, 116, 0.4)',
+                            pointRadius: 0,
+                            fill: '-1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { type: 'time', time: { unit: 'month' }, grid: { display: false } },
+                        y: { grid: { color: '#f1f5f9' }, title: { display: true, text: 'Order Count' } }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { mode: 'index', intersect: false }
+                    }
+                }
+            });
+        }
+
+        // --- Details UI Logic ---
+        function renderDetails(productName, stockData) {
+            const container = document.getElementById('details-content');
+            const loader = document.getElementById('loading-details');
+            const headerBadge = document.getElementById('header-badge');
+            
+            loader.classList.add('hidden');
+            container.classList.remove('hidden');
+
+            const { Stocks, Upper_Limit, Predictions, need_restock } = stockData;
+
+            // Header Badge
+            if (need_restock) {
+                headerBadge.innerHTML = `
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700 border border-red-200 shadow-sm animate-pulse">
+                        <i class="fa-solid fa-triangle-exclamation"></i> ACTION REQUIRED
+                    </span>`;
+            } else {
+                headerBadge.innerHTML = `
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700 border border-emerald-200 shadow-sm">
+                        <i class="fa-solid fa-check"></i> STOCK HEALTHY
+                    </span>`;
+            }
+
+            // Card Content
+            if (need_restock) {
+                container.innerHTML = `
+                    <!-- Top Gradient -->
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-red-500 to-orange-500"></div>
+                    
+                    <div class="mb-4">
+                        <h3 class="text-xl font-bold text-red-600 mb-1">Restock Recommended</h3>
+                        <p class="text-sm text-slate-500">Inventory levels are critically low relative to predicted demand.</p>
+                    </div>
+
+                    <div class="bg-red-50 rounded-xl p-4 border border-red-100 mb-6">
+                         <p class="text-xs text-slate-500 mb-2">Analysis:</p>
+                         <p class="text-sm font-medium text-slate-700 leading-relaxed">
+                            The model predicted that the total <span class="font-bold">${productName}</span> sold for the next 4 weeks will be between <span class="font-bold text-slate-900">${Predictions}</span> units.
+                         </p>
+                         <div class="mt-3 pt-3 border-t border-red-200 flex justify-between items-end">
+                            <span class="text-xs font-bold text-red-400 uppercase">Current Inventory</span>
+                            <span class="text-2xl font-black text-red-600">${Stocks}</span>
+                         </div>
+                    </div>
+
+                    <!-- Action Container with ID -->
+                    <div id="restock-actions" class="mt-auto">
+                        <p class="text-center text-sm font-semibold text-slate-700 mb-3">Do you want to restock?</p>
+                        <div class="grid grid-cols-2 gap-3">
+                            <button id="btn-no" class="py-2.5 rounded-lg border border-slate-300 text-slate-600 font-bold hover:bg-slate-50 transition-colors">No</button>
+                            <button id="btn-yes" class="py-2.5 rounded-lg bg-red-600 text-white font-bold shadow-lg shadow-red-500/30 hover:bg-red-700 transition-colors">
+                                Yes, Restock
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                // Add Event Listener for Modal
+                document.getElementById('btn-yes').addEventListener('click', openModal);
+                document.getElementById('btn-no').addEventListener('click', () => alert('Restock ignored for now.'));
+
+            } else {
+                // Stock is Healthy
+                container.innerHTML = `
+                    <!-- Top Gradient -->
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-emerald-500 to-teal-500"></div>
+                    
+                    <div class="mb-4">
+                        <h3 class="text-xl font-bold text-emerald-600 mb-1">Stock Levels Healthy</h3>
+                        <p class="text-sm text-slate-500">Current inventory is sufficient to meet predicted demand.</p>
+                    </div>
+
+                    <div class="bg-emerald-50 rounded-xl p-4 border border-emerald-100 mb-6">
+                         <p class="text-xs text-slate-500 mb-2">Analysis:</p>
+                         <p class="text-sm font-medium text-slate-700 leading-relaxed">
+                            The model predicted that the total <span class="font-bold">${productName}</span> sold for the next 4 weeks is <span class="font-bold text-slate-900">${Predictions}</span> units.
+                         </p>
+                         <div class="mt-3 pt-3 border-t border-emerald-200 flex justify-between items-end">
+                            <span class="text-xs font-bold text-emerald-500 uppercase">Current Inventory</span>
+                            <span class="text-2xl font-black text-emerald-700">${Stocks}</span>
+                         </div>
+                    </div>
+
+                    <div class="mt-auto">
+                        <button class="w-full py-2.5 rounded-lg border border-slate-200 text-slate-400 font-bold cursor-not-allowed bg-slate-50" disabled>
+                            No Action Needed
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        // --- Modal Logic ---
+        const modal = document.getElementById('restock-modal');
+        const modalBackdrop = document.getElementById('modal-backdrop');
+        const modalPanel = document.getElementById('modal-panel');
+        const quantityInput = document.getElementById('quantity');
+        const confirmBtn = document.getElementById('confirm-restock-btn');
+
+        function openModal() {
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modalBackdrop.classList.remove('opacity-0');
+                modalPanel.classList.remove('scale-95', 'opacity-0');
+                modalPanel.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        function closeModal() {
+            modalBackdrop.classList.add('opacity-0');
+            modalPanel.classList.remove('scale-100', 'opacity-100');
+            modalPanel.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+            quantityInput.value = '';
+        }
+
+        document.getElementById('cancel-modal-btn').addEventListener('click', closeModal);
+
+        confirmBtn.addEventListener('click', async () => {
+            const qty = quantityInput.value;
+            const product = new URLSearchParams(window.location.search).get('product');
+
+            if (!qty || qty <= 0) {
+                alert("Please enter a valid quantity.");
+                return;
+            }
+
+            // Show Loading
+            const originalText = confirmBtn.innerText;
+            confirmBtn.innerText = "Sending...";
+            confirmBtn.disabled = true;
+            confirmBtn.classList.add('opacity-70');
+
+            try {
+                const response = await fetch('/send-email-stock-alert', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: "22002606@siswa.um.edu.my",
+                        item: product,
+                        quantity: parseInt(qty)
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result === true) {
+                    closeModal();
+                    
+                    // --- SUCCESS UPDATE LOGIC ---
+                    const now = new Date();
+                    const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    
+                    const actionContainer = document.getElementById('restock-actions');
+                    if (actionContainer) {
+                        actionContainer.innerHTML = `
+                            <div class="bg-emerald-50 border border-emerald-100 rounded-lg p-4 text-center animate-fade-in">
+                                <div class="h-10 w-10 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-2 shadow-sm">
+                                    <i class="fa-solid fa-check text-lg"></i>
+                                </div>
+                                <h4 class="text-sm font-bold text-emerald-800">Request Sent</h4>
+                                <p class="text-xs text-emerald-600 mt-1">Restock request sent at ${timeString}</p>
+                            </div>
+                        `;
+                    }
+                    
+                } else {
+                    alert("❌ Failed to send email. Check console/logs.");
+                }
+            } catch (err) {
+                console.error(err);
+                alert("❌ Error sending request.");
+            } finally {
+                confirmBtn.innerText = originalText;
+                confirmBtn.disabled = false;
+                confirmBtn.classList.remove('opacity-70');
+            }
+        });
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Prediction Dashboard</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+    <!-- Navbar -->
+    <nav class="bg-white/80 backdrop-blur-md shadow-sm border-b border-slate-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16"> <!-- Increased height slightly for better spacing -->
+                
+                <!-- Left Side: Logo & Navigation -->
+                <div class="flex items-center gap-6">
+                    
+                    <!-- Branding -->
+                    <div class="flex items-center gap-3">
+                        <div class="bg-gradient-to-br from-blue-600 to-indigo-600 text-white p-1.5 rounded-lg shadow-md shadow-blue-500/30">
+                            <i class="fa-solid fa-layer-group text-sm"></i>
+                        </div>
+                        <span class="font-bold text-lg tracking-tight text-slate-900">AdventureWorks <span class="text-blue-600">AI</span></span>
+                    </div>
+
+                    <!-- Divider -->
+                    <div class="h-6 w-px bg-slate-200 hidden sm:block"></div>
+
+                    <!-- NEW BUTTON: Analytics Dashboard -->
+                    <a href="/" class="group flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-all">
+                        <i class="fa-solid fa-chart-pie group-hover:scale-110 transition-transform"></i>
+                        Analytics Dashboard
+                    </a>
+                </div>
+
+                <!-- Right Side Actions -->
+                <div class="flex items-center gap-5">
+                    
+                    <!-- Live Forecast Badge -->
+                    <span class="text-[10px] font-bold text-slate-500 bg-white px-2.5 py-1 rounded-full border border-slate-200 shadow-sm hidden sm:inline-flex">
+                        <i class="fa-solid fa-circle text-emerald-500 text-[8px] mr-1 animate-pulse"></i> Live Forecast
+                    </span>
+
+                    <!-- Notification Bell System -->
+                    <div class="relative">
+                        <button id="notify-btn" class="relative p-2 text-slate-500 hover:text-blue-600 hover:bg-slate-100 rounded-full transition-all duration-200 focus:outline-none">
+                            <i class="fa-regular fa-bell text-lg"></i>
+                            
+                            <!-- Red Dot Badge -->
+                            <span class="absolute top-1.5 right-2 h-2.5 w-2.5 bg-rose-500 border-2 border-white rounded-full">
+                                <span class="absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75 animate-ping"></span>
+                            </span>
+                        </button>
+
+                        <!-- Notification Dropdown -->
+                        <div id="notify-dropdown" class="hidden absolute right-0 mt-3 w-80 bg-white rounded-xl shadow-[0_20px_50px_-12px_rgba(0,0,0,0.15)] border border-slate-100 overflow-hidden z-50 origin-top-right transform transition-all">
+                            
+                            <!-- Dropdown Header -->
+                            <div class="px-4 py-3 border-b border-slate-50 bg-slate-50/50 flex justify-between items-center">
+                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Notifications</span>
+                                <span class="text-[10px] font-bold bg-rose-100 text-rose-600 px-1.5 py-0.5 rounded-md">1 New</span>
+                            </div>
+
+                            <!-- Notification Item -->
+                            <div onclick="window.location.href='/orders_page'" class="p-4 hover:bg-blue-50/50 transition-colors cursor-pointer group">
+                                <div class="flex items-start gap-3">
+                                    <!-- Icon -->
+                                    <div class="flex-shrink-0 mt-1">
+                                        <div class="h-8 w-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 shadow-sm">
+                                            <i class="fa-solid fa-chart-line text-xs"></i>
+                                        </div>
+                                    </div>
+                                    <!-- Text -->
+                                    <div>
+                                        <p class="text-sm font-bold text-slate-800 leading-tight group-hover:text-blue-700 transition-colors">High Demand Alert</p>
+                                        <p class="text-xs text-slate-500 mt-1 leading-relaxed">
+                                            Busier weeks are coming ahead, please adjust your staff schedule.
+                                        </p>
+                                        <span class="inline-block mt-2 text-[10px] font-bold text-blue-600 hover:underline">
+                                            Review Schedule &rarr;
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Dropdown Footer -->
+                            <div class="bg-slate-50 px-4 py-2 text-center border-t border-slate-100">
+                                <span class="text-[10px] text-slate-400">View all notifications</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- End Notification System -->
+
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+        
+        <div class="mb-8">
+            <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Inventory Insights</h1>
+            <p class="mt-1 text-sm text-slate-500">Real-time stock levels vs. predicted demand.</p>
+        </div>
+
+        <!-- Loading Spinner -->
+        <div id="loading-indicator" class="flex flex-col justify-center items-center py-32">
+            <div class="animate-spin rounded-full h-10 w-10 border-[3px] border-slate-200 border-t-blue-600"></div>
+            <p class="mt-4 text-sm text-slate-400 font-medium animate-pulse">Analyzing inventory...</p>
+        </div>
+
+        <!-- Cards Grid -->
+        <div id="product-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 hidden">
+            <!-- Cards injected here -->
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 mt-auto">
+        <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+            <p class="text-center text-xs text-slate-400">&copy; 2025 AdventureWorks Inc.</p>
+        </div>
+    </footer>
+
+    <!-- Logic -->
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const grid = document.getElementById('product-grid');
+            const loader = document.getElementById('loading-indicator');
+
+            // --- Notification Toggle Logic ---
+            const notifyBtn = document.getElementById('notify-btn');
+            const notifyDropdown = document.getElementById('notify-dropdown');
+
+            notifyBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                notifyDropdown.classList.toggle('hidden');
+            });
+
+            // Close dropdown if clicked outside
+            document.addEventListener('click', (e) => {
+                if (!notifyBtn.contains(e.target) && !notifyDropdown.contains(e.target)) {
+                    notifyDropdown.classList.add('hidden');
+                }
+            });
+            // ----------------------------------
+
+            try {
+                // 1. Get List of Products
+                const response = await fetch('/get_unique_products');
+                const products = await response.json();
+
+                // 2. Fetch details for all products in parallel
+                const productPromises = products.map(async (productName) => {
+                    try {
+                        const encoded = encodeURIComponent(productName);
+                        
+                        const [trendRes, stockRes] = await Promise.all([
+                            fetch(`/product-change-status?product=${encoded}`),
+                            fetch(`/restock_or_not?product=${encoded}`)
+                        ]);
+
+                        const trendData = await trendRes.json();
+                        const stockData = await stockRes.json();
+
+                        return { name: productName, trend: trendData, stock: stockData };
+                    } catch (err) {
+                        console.error(`Error fetching ${productName}`, err);
+                        return null;
+                    }
+                });
+
+                const results = await Promise.all(productPromises);
+
+                // 3. Render
+                loader.classList.add('hidden');
+                grid.classList.remove('hidden');
+
+                results.forEach(item => {
+                    if (item) {
+                        grid.innerHTML += createCard(item.name, item.trend, item.stock);
+                    }
+                });
+
+            } catch (error) {
+                loader.innerHTML = `<p class="text-rose-500 font-bold text-sm">Failed to load data.</p>`;
+                console.error(error);
+            }
+        });
+
+        function createCard(productName, trend, stock) {
+            const status = trend.prediction_status;
+            const needsRestock = stock.need_restock;
+            
+            // Encode product name for URL
+            const productUrl = `/details_page?product=${encodeURIComponent(productName)}`;
+
+            // --- Theme Logic ---
+            let theme = {
+                border: 'border-amber-100',
+                badgeBg: 'bg-amber-50',
+                badgeText: 'text-amber-700',
+                iconBg: 'bg-amber-100',
+                iconColor: 'text-amber-600',
+                iconClass: 'fa-minus',
+                shadowBase: 'shadow-[0_4px_20px_rgb(251,191,36,0.08)]',
+                shadowHover: 'hover:shadow-[0_10px_25px_rgb(251,191,36,0.2)]',
+                gradient: 'from-amber-400'
+            };
+
+            if (status === 'Increase') {
+                theme = {
+                    border: 'border-emerald-100',
+                    badgeBg: 'bg-emerald-50',
+                    badgeText: 'text-emerald-700',
+                    iconBg: 'bg-emerald-100',
+                    iconColor: 'text-emerald-600',
+                    iconClass: 'fa-arrow-trend-up',
+                    shadowBase: 'shadow-[0_4px_20px_rgb(16,185,129,0.08)]',
+                    shadowHover: 'hover:shadow-[0_10px_25px_rgb(16,185,129,0.2)]',
+                    gradient: 'from-emerald-400'
+                };
+            } else if (status === 'Decrease') {
+                theme = {
+                    border: 'border-rose-100',
+                    badgeBg: 'bg-rose-50',
+                    badgeText: 'text-rose-700',
+                    iconBg: 'bg-rose-100',
+                    iconColor: 'text-rose-600',
+                    iconClass: 'fa-arrow-trend-down',
+                    shadowBase: 'shadow-[0_4px_20px_rgb(244,63,94,0.08)]',
+                    shadowHover: 'hover:shadow-[0_10px_25px_rgb(244,63,94,0.2)]',
+                    gradient: 'from-rose-400'
+                };
+            }
+
+            // Formatting Numbers
+            const sales = parseFloat(trend.last_4_weeks_sale).toFixed(0);
+            const lower = parseFloat(trend.forecast_lower_limit).toFixed(0);
+            const upper = parseFloat(trend.forecast_upper_limit).toFixed(0);
+            const currentStock = stock.Stocks;
+
+            // Restock Styling Overrides
+            const stockTextColor = needsRestock ? 'text-red-600' : 'text-slate-700';
+            const borderClass = needsRestock ? 'border-red-300 ring-1 ring-red-100' : theme.border;
+
+            return `
+            <div class="group relative bg-white rounded-2xl p-5 border ${borderClass} 
+                        transition-all duration-300 ease-out 
+                        hover:-translate-y-1 ${theme.shadowBase} ${theme.shadowHover} overflow-hidden flex flex-col h-full">
+                
+                <!-- Top Gradient -->
+                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${theme.gradient} to-white opacity-80"></div>
+
+                <!-- RESTOCK ALERT OVERLAY -->
+                ${needsRestock ? `
+                <div class="absolute top-0 right-0 p-3">
+                    <span class="flex items-center gap-1.5 bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-lg shadow-red-500/40 animate-pulse z-10">
+                        <i class="fa-solid fa-triangle-exclamation"></i> RESTOCK
+                    </span>
+                </div>
+                ` : ''}
+
+                <!-- Header -->
+                <div class="flex justify-between items-start mb-4">
+                    <div class="pr-8"> 
+                        <h3 class="text-sm font-bold text-slate-800 leading-tight mb-1 truncate" title="${productName}">${productName}</h3>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold tracking-wide uppercase ${theme.badgeBg} ${theme.badgeText}">
+                            ${status}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Stats Row -->
+                <div class="grid grid-cols-2 gap-4 mb-4 border-b border-slate-50 pb-4">
+                    <div>
+                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Past 4 Wks</p>
+                        <span class="text-xl font-extrabold text-slate-800">${sales}</span>
+                        <span class="text-[10px] text-slate-400">sold</span>
+                    </div>
+                    <div>
+                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">In Stock</p>
+                        <span class="text-xl font-extrabold ${stockTextColor}">${currentStock}</span>
+                        <span class="text-[10px] text-slate-400">units</span>
+                    </div>
+                </div>
+
+                <!-- Forecast Footer -->
+                <div class="mt-auto bg-slate-50 rounded-xl p-3 border border-slate-100">
+                    <p class="text-[10px] text-slate-400 font-bold text-center mb-2 uppercase tracking-wide">
+                        Predicted sales for the next 4 weeks
+                    </p>
+                    <div class="flex justify-center items-center gap-6">
+                        <div class="text-center">
+                            <span class="text-lg font-bold text-slate-700 block leading-none">${lower}</span>
+                            <span class="text-[9px] text-slate-500 font-bold uppercase mt-1 block">Min</span>
+                        </div>
+                        <div class="h-6 w-px bg-slate-300"></div>
+                        <div class="text-center">
+                            <span class="text-lg font-bold text-slate-700 block leading-none">${upper}</span>
+                            <span class="text-[9px] text-slate-500 font-bold uppercase mt-1 block">Max</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Button -->
+                 ${needsRestock ? `
+                 <div class="mt-3">
+                    <button onclick="window.location.href='${productUrl}'" class="w-full py-1.5 bg-red-50 text-red-600 border border-red-100 rounded-lg text-xs font-bold hover:bg-red-600 hover:text-white transition-colors">
+                        Order Stock
+                    </button>
+                 </div>
+                 ` : `
+                 <div class="mt-3 h-0 group-hover:h-auto overflow-hidden transition-all opacity-0 group-hover:opacity-100">
+                    <button onclick="window.location.href='${productUrl}'" class="w-full py-1.5 bg-slate-50 text-slate-500 border border-slate-200 rounded-lg text-xs font-bold hover:text-blue-600 hover:bg-white transition-colors">
+                        View Details
+                    </button>
+                 </div>
+                 `}
+                 
+            </div>
+            `;
+        }
+    </script>
+</body>
+</html>
