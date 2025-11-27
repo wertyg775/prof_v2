@@ -26,7 +26,6 @@
     </style>
 </head>
 <body class="bg-gradient-to-br from-slate-50 via-indigo-50/30 to-slate-50 text-slate-800 min-h-screen flex flex-col">
-    
     <!-- Navbar -->
     <nav class="bg-white/80 backdrop-blur-md shadow-sm border-b border-slate-200 sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -70,9 +69,32 @@
         </div>
     </div>
 
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <!-- Disclaimer Badge -->
+            <div class="bg-blue-50 border-2 border-blue-200 rounded-xl p-4 flex-grow">
+                <p class="text-sm text-blue-800 flex items-start gap-2">
+                    <i class="fa-solid fa-info-circle mt-0.5"></i>
+                    <span>
+                        <strong id="scaleLabel">Enterprise Projection:</strong> 
+                        <span id="scaleDescription">Metrics scaled to 30-store retail chain deployment (300 products tracked)</span>
+                    </span>
+                </p>
+            </div>
+            <!-- Scale Toggle -->
+            <div class="bg-white rounded-xl shadow-sm border-2 border-slate-200 p-4 flex-shrink-0">
+                <label class="inline-flex items-center cursor-pointer">
+                    <span class="text-sm font-bold text-slate-600 mr-3">Pilot (10 SKUs)</span>
+                    <input type="checkbox" id="scaleToggle" class="sr-only peer" checked onchange="toggleScale()">
+                    <div class="relative w-14 h-7 bg-slate-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-indigo-600"></div>
+                    <span class="text-sm font-bold text-indigo-600 ml-3">Enterprise Scale</span>
+                </label>
+            </div>
+        </div>
+    </div>
+
     <!-- Main Content -->
     <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full space-y-10">
-        
         <!-- Section 1: Headline Metrics -->
         <div>
             <div class="flex items-center justify-between mb-6">
@@ -85,7 +107,6 @@
                     <span>Last updated: <span id="lastUpdated">--</span></span>
                 </div>
             </div>
-            
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <!-- Monthly Savings -->
                 <div class="stat-card animate-slide-in bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-6 shadow-xl border border-emerald-400/20 relative overflow-hidden group hover:scale-105 transition-transform duration-300">
@@ -102,7 +123,6 @@
                         <p class="text-xs text-emerald-100">per month</p>
                     </div>
                 </div>
-
                 <!-- Annual Savings -->
                 <div class="stat-card animate-slide-in bg-gradient-to-br from-indigo-500 to-violet-600 rounded-2xl p-6 shadow-xl border border-indigo-400/20 relative overflow-hidden group hover:scale-105 transition-transform duration-300">
                     <div class="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
@@ -118,7 +138,6 @@
                         <p class="text-xs text-indigo-100">projected annually</p>
                     </div>
                 </div>
-
                 <!-- Stockouts Prevented -->
                 <div class="stat-card animate-slide-in bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl p-6 shadow-xl border border-amber-400/20 relative overflow-hidden group hover:scale-105 transition-transform duration-300">
                     <div class="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
@@ -134,7 +153,6 @@
                         <p class="text-xs text-amber-100">products saved</p>
                     </div>
                 </div>
-
                 <!-- Products Optimized -->
                 <div class="stat-card animate-slide-in bg-gradient-to-br from-rose-500 to-pink-600 rounded-2xl p-6 shadow-xl border border-rose-400/20 relative overflow-hidden group hover:scale-105 transition-transform duration-300">
                     <div class="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
@@ -159,15 +177,13 @@
                 <i class="fa-solid fa-trophy text-amber-500"></i>
                 Key Value Propositions
             </h2>
-            
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="valuePropositions">
                 <!-- Value cards will be inserted here by JavaScript -->
             </div>
         </div>
 
-        <!-- Section 3: Detailed Metrics -->
+        <!-- Section 3: Before/After Comparison -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            
             <!-- Stockout Prevention Details -->
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
                 <div class="flex items-center gap-3 mb-6">
@@ -180,29 +196,47 @@
                     </div>
                 </div>
 
-                <div class="space-y-4">
-                    <div class="flex justify-between items-center p-4 bg-slate-50 rounded-xl">
-                        <span class="text-sm font-semibold text-slate-700">Products At Risk</span>
-                        <span class="text-2xl font-bold text-slate-800" id="productsAtRisk">--</span>
+                <!-- Before/After Comparison -->
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <!-- BEFORE -->
+                    <div class="bg-rose-50 border-2 border-rose-200 rounded-xl p-4">
+                        <div class="flex items-center gap-2 mb-3">
+                            <i class="fa-solid fa-times-circle text-rose-500"></i>
+                            <span class="text-xs font-bold text-rose-700 uppercase">Without Forecast</span>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-4xl font-black text-rose-600 mb-1" id="stockoutRateWithout">--</p>
+                            <p class="text-xs text-rose-700 font-semibold">Fill Rate</p>
+                        </div>
                     </div>
-                    <div class="flex justify-between items-center p-4 bg-slate-50 rounded-xl">
-                        <span class="text-sm font-semibold text-slate-700">Stockout Rate (Without Forecast)</span>
-                        <span class="text-2xl font-bold text-rose-600" id="stockoutRateWithout">--</span>
-                    </div>
-                    <div class="flex justify-between items-center p-4 bg-emerald-50 rounded-xl border border-emerald-200">
-                        <span class="text-sm font-semibold text-emerald-700">Stockout Rate (With Forecast)</span>
-                        <span class="text-2xl font-bold text-emerald-600" id="stockoutRateWith">--</span>
-                    </div>
-                    <div class="flex justify-between items-center p-4 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl shadow-lg">
-                        <span class="text-sm font-bold">Improvement</span>
-                        <span class="text-2xl font-black" id="stockoutImprovement">--</span>
+
+                    <!-- AFTER -->
+                    <div class="bg-emerald-50 border-2 border-emerald-200 rounded-xl p-4">
+                        <div class="flex items-center gap-2 mb-3">
+                            <i class="fa-solid fa-check-circle text-emerald-500"></i>
+                            <span class="text-xs font-bold text-emerald-700 uppercase">With Forecast</span>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-4xl font-black text-emerald-600 mb-1" id="stockoutRateWith">--</p>
+                            <p class="text-xs text-emerald-700 font-semibold">Fill Rate</p>
+                        </div>
                     </div>
                 </div>
 
-                <div class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-xl">
-                    <p class="text-xs text-blue-800 leading-relaxed">
-                        <i class="fa-solid fa-lightbulb mr-1"></i>
-                        <strong>Impact:</strong> Early warning system prevents revenue loss by alerting you 4 weeks before stockouts occur.
+                <!-- Improvement Badge -->
+                <div class="bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl p-4 shadow-lg text-center mb-4">
+                    <div class="flex items-center justify-center gap-2 mb-1">
+                        <i class="fa-solid fa-arrow-trend-up text-2xl"></i>
+                        <span class="text-4xl font-black" id="stockoutImprovement">--</span>
+                    </div>
+                    <p class="text-sm font-bold text-emerald-100">Improvement in Fill Rate</p>
+                </div>
+
+                <!-- Impact Statement -->
+                <div class="p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                    <p class="text-xs text-blue-800 leading-relaxed flex items-start gap-2">
+                        <i class="fa-solid fa-lightbulb mt-0.5 text-blue-600"></i>
+                        <span><strong>Impact:</strong> Early warning system prevents revenue loss by alerting you 4 weeks before stockouts occur.</span>
                     </p>
                 </div>
             </div>
@@ -219,42 +253,71 @@
                     </div>
                 </div>
 
-                <div class="space-y-4">
-                    <div class="flex justify-between items-center p-4 bg-slate-50 rounded-xl">
-                        <div class="flex items-center gap-2">
-                            <div class="w-3 h-3 bg-rose-500 rounded-full"></div>
-                            <span class="text-sm font-semibold text-slate-700">Overstocked</span>
+                <!-- Before/After Comparison -->
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <!-- BEFORE -->
+                    <div class="bg-amber-50 border-2 border-amber-200 rounded-xl p-4">
+                        <div class="flex items-center gap-2 mb-3">
+                            <i class="fa-solid fa-triangle-exclamation text-amber-500"></i>
+                            <span class="text-xs font-bold text-amber-700 uppercase">Before</span>
                         </div>
-                        <span class="text-xl font-bold text-slate-800" id="overstockedCount">--</span>
-                    </div>
-                    <div class="flex justify-between items-center p-4 bg-slate-50 rounded-xl">
-                        <div class="flex items-center gap-2">
-                            <div class="w-3 h-3 bg-amber-500 rounded-full"></div>
-                            <span class="text-sm font-semibold text-slate-700">Understocked</span>
+                        <div class="space-y-2">
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs text-slate-600">Excess:</span>
+                                <span class="text-lg font-bold text-amber-700" id="overstockedBefore">--</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs text-slate-600">Optimal:</span>
+                                <span class="text-lg font-bold text-amber-700" id="optimalBefore">--</span>
+                            </div>
+                            <div class="pt-2 border-t border-amber-300">
+                                <p class="text-xs text-amber-700 font-semibold">Efficiency:</p>
+                                <p class="text-2xl font-black text-amber-600" id="efficiencyBefore">--</p>
+                            </div>
                         </div>
-                        <span class="text-xl font-bold text-slate-800" id="understockedCount">--</span>
                     </div>
-                    <div class="flex justify-between items-center p-4 bg-emerald-50 rounded-xl border border-emerald-200">
-                        <div class="flex items-center gap-2">
-                            <div class="w-3 h-3 bg-emerald-500 rounded-full"></div>
-                            <span class="text-sm font-semibold text-emerald-700">Optimally Stocked</span>
+
+                    <!-- AFTER -->
+                    <div class="bg-indigo-50 border-2 border-indigo-200 rounded-xl p-4">
+                        <div class="flex items-center gap-2 mb-3">
+                            <i class="fa-solid fa-sparkles text-indigo-500"></i>
+                            <span class="text-xs font-bold text-indigo-700 uppercase">After</span>
                         </div>
-                        <span class="text-xl font-bold text-emerald-600" id="optimalCount">--</span>
-                    </div>
-                    <div class="flex justify-between items-center p-4 bg-gradient-to-r from-indigo-500 to-violet-600 text-white rounded-xl shadow-lg">
-                        <span class="text-sm font-bold">Carrying Cost Saved/Month</span>
-                        <span class="text-2xl font-black" id="carryingCostSaved">--</span>
+                        <div class="space-y-2">
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs text-slate-600">Excess:</span>
+                                <span class="text-lg font-bold text-indigo-700" id="overstockedAfter">--</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs text-slate-600">Optimal:</span>
+                                <span class="text-lg font-bold text-indigo-700" id="optimalAfter">--</span>
+                            </div>
+                            <div class="pt-2 border-t border-indigo-300">
+                                <p class="text-xs text-indigo-700 font-semibold">Efficiency:</p>
+                                <p class="text-2xl font-black text-indigo-600" id="efficiencyAfter">--</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <div class="mt-6 p-4 bg-purple-50 border border-purple-200 rounded-xl">
-                    <p class="text-xs text-purple-800 leading-relaxed">
-                        <i class="fa-solid fa-piggy-bank mr-1"></i>
-                        <strong>Impact:</strong> Reduces excess inventory by up to 25%, freeing up working capital for business growth.
+                <!-- Improvement Badge -->
+                <div class="bg-gradient-to-r from-indigo-500 to-violet-600 text-white rounded-xl p-4 shadow-lg text-center mb-4">
+                    <div class="flex items-center justify-center gap-2 mb-1">
+                        <i class="fa-solid fa-arrow-trend-up text-2xl"></i>
+                        <span class="text-4xl font-black" id="inventoryImprovement">--</span>
+                    </div>
+                    <p class="text-sm font-bold text-indigo-100">Improvement in Optimization</p>
+                    <p class="text-xs text-indigo-200 mt-2">Monthly Savings: <span class="font-black text-lg" id="carryingCostSaved">--</span></p>
+                </div>
+
+                <!-- Impact Statement -->
+                <div class="p-4 bg-purple-50 border border-purple-200 rounded-xl">
+                    <p class="text-xs text-purple-800 leading-relaxed flex items-start gap-2">
+                        <i class="fa-solid fa-piggy-bank mt-0.5 text-purple-600"></i>
+                        <span><strong>Impact:</strong> Reduces excess inventory by up to 25%, freeing up working capital for business growth.</span>
                     </p>
                 </div>
             </div>
-
         </div>
 
         <!-- Section 4: Forecast Accuracy -->
@@ -273,7 +336,6 @@
                     --
                 </div>
             </div>
-
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div class="text-center p-6 bg-gradient-to-br from-violet-50 to-purple-50 rounded-xl border border-violet-200">
                     <p class="text-xs font-bold text-violet-600 uppercase tracking-wider mb-2">Mean Absolute Error</p>
@@ -297,7 +359,6 @@
         <div class="bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 rounded-2xl shadow-2xl p-8 text-white relative overflow-hidden">
             <div class="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32"></div>
             <div class="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full -ml-24 -mb-24"></div>
-            
             <div class="relative z-10">
                 <div class="flex items-center gap-3 mb-4">
                     <div class="bg-white/20 backdrop-blur-sm p-3 rounded-xl">
@@ -305,7 +366,6 @@
                     </div>
                     <h2 class="text-2xl font-black">Total Business Impact</h2>
                 </div>
-                
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
                     <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
                         <p class="text-xs font-bold text-emerald-100 uppercase tracking-wider mb-2">💰 Revenue Protected</p>
@@ -323,7 +383,6 @@
                         <p class="text-xs text-cyan-100 mt-1">per month</p>
                     </div>
                 </div>
-
                 <div class="mt-6 p-4 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20">
                     <p class="text-sm leading-relaxed">
                         <strong>Bottom Line:</strong> Our intelligent forecasting system delivers measurable ROI by preventing stockouts, optimizing inventory levels, and eliminating emergency ordering costs. This translates to higher revenue, lower costs, and improved customer satisfaction.
@@ -331,7 +390,6 @@
                 </div>
             </div>
         </div>
-
     </main>
 
     <!-- Footer -->
@@ -342,127 +400,166 @@
     </footer>
 
     <!-- JavaScript -->
-<script>
-    Chart.defaults.font.family = "'Inter', sans-serif";
-    Chart.defaults.color = '#64748b';
+    <script>
+        Chart.defaults.font.family = "'Inter', sans-serif";
+        Chart.defaults.color = '#64748b';
 
-    // USD to MYR conversion rate
-    const USD_TO_MYR = 4.47;
+        // SCALING SYSTEM
+        let CURRENT_SCALE = 30;  // Start with enterprise scale
 
-    document.addEventListener('DOMContentLoaded', async function() {
-        await loadDashboardSummary();
-        await loadDetailedMetrics();
-        
-        // Set last updated time
-        document.getElementById('lastUpdated').textContent = new Date().toLocaleString();
-    });
+        function toggleScale() {
+            const isChecked = document.getElementById('scaleToggle').checked;
+            CURRENT_SCALE = isChecked ? 30 : 1;
 
-    // Helper function to extract number from currency string and convert to RM
-    function convertToRM(currencyString) {
-        const number = parseFloat(currencyString.replace(/[$,RM]/g, ''));
-        return Math.round(number * USD_TO_MYR);
-    }
+            const scaleLabel = document.getElementById('scaleLabel');
+            const scaleDescription = document.getElementById('scaleDescription');
 
-    async function loadDashboardSummary() {
-        try {
-            const response = await fetch('/api/metrics/dashboard-summary');
-            const data = await response.json();
+            if (isChecked) {
+                scaleLabel.textContent = 'Enterprise Projection:';
+                scaleDescription.textContent = 'Metrics scaled to 30-store retail chain deployment (300 products tracked)';
+            } else {
+                scaleLabel.textContent = 'Pilot Data:';
+                scaleDescription.textContent = 'Actual metrics from 10-product pilot implementation';
+            }
 
-            // Extract numbers and multiply by 4.47
-            const monthlySavingsRM = convertToRM(data.headline_metrics.monthly_savings);
-            const annualSavingsRM = convertToRM(data.headline_metrics.annual_savings);
+            loadDashboardSummary();
+            loadDetailedMetrics();
+        }
 
-            // Update headline metrics with RM conversion
-            document.getElementById('monthlySavings').textContent = 'RM' + monthlySavingsRM.toLocaleString();
-            document.getElementById('annualSavings').textContent = 'RM' + annualSavingsRM.toLocaleString();
-            document.getElementById('stockoutsPrevented').textContent = data.headline_metrics.stockouts_prevented;
-            document.getElementById('productsOptimized').textContent = data.headline_metrics.products_optimized;
+        document.addEventListener('DOMContentLoaded', async function() {
+            await loadDashboardSummary();
+            await loadDetailedMetrics();
+            document.getElementById('lastUpdated').textContent = new Date().toLocaleString();
+        });
 
-            // Render value propositions
-            const vpContainer = document.getElementById('valuePropositions');
-            vpContainer.innerHTML = '';
-            
-            const icons = ['fa-shield-halved', 'fa-piggy-bank', 'fa-bolt'];
-            const gradients = [
-                'from-emerald-500 to-teal-600',
-                'from-indigo-500 to-violet-600',
-                'from-amber-500 to-orange-600'
-            ];
-
-            data.value_propositions.forEach((vp, index) => {
-                const card = document.createElement('div');
-                card.className = 'bg-white rounded-2xl shadow-sm border border-slate-200 p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1';
+        async function loadDashboardSummary() {
+            try {
+                const response = await fetch('/api/metrics/dashboard-summary');
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 
-                // Extract number from value and convert to RM
-                const valueRM = convertToRM(vp.value);
-                
-                card.innerHTML = `
-                    <div class="flex items-center gap-3 mb-4">
-                        <div class="bg-gradient-to-br ${gradients[index]} text-white p-3 rounded-xl shadow-lg">
-                            <i class="fa-solid ${icons[index]} text-xl"></i>
+                const data = await response.json();
+                console.log('Dashboard data:', data);
+
+                // Extract and scale the numbers
+                const monthlySavings = parseFloat(data.headline_metrics.monthly_savings.replace(/[^0-9.]/g, '')) * CURRENT_SCALE;
+                const annualSavings = parseFloat(data.headline_metrics.annual_savings.replace(/[^0-9.]/g, '')) * CURRENT_SCALE;
+
+                // Update headline metrics
+                document.getElementById('monthlySavings').textContent = 'RM' + Math.round(monthlySavings).toLocaleString();
+                document.getElementById('annualSavings').textContent = 'RM' + Math.round(annualSavings).toLocaleString();
+                document.getElementById('stockoutsPrevented').textContent = (data.headline_metrics.stockouts_prevented * CURRENT_SCALE);
+                document.getElementById('productsOptimized').textContent = (data.headline_metrics.products_optimized * CURRENT_SCALE);
+
+                // Render value propositions
+                const vpContainer = document.getElementById('valuePropositions');
+                vpContainer.innerHTML = '';
+
+                const icons = ['fa-shield-halved', 'fa-piggy-bank', 'fa-bolt'];
+                const gradients = [
+                    'from-emerald-500 to-teal-600',
+                    'from-indigo-500 to-violet-600',
+                    'from-amber-500 to-orange-600'
+                ];
+
+                data.value_propositions.forEach((vp, index) => {
+                    const card = document.createElement('div');
+                    card.className = 'bg-white rounded-2xl shadow-sm border border-slate-200 p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1';
+
+                    const originalValue = parseFloat(vp.value.replace(/[^0-9.]/g, ''));
+                    const scaledValue = Math.round(originalValue * CURRENT_SCALE);
+
+                    card.innerHTML = `
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="bg-gradient-to-br ${gradients[index]} text-white p-3 rounded-xl shadow-lg">
+                                <i class="fa-solid ${icons[index]} text-xl"></i>
+                            </div>
+                            <h3 class="text-lg font-bold text-slate-800">${vp.title}</h3>
                         </div>
-                        <h3 class="text-lg font-bold text-slate-800">${vp.title}</h3>
-                    </div>
-                    <p class="text-3xl font-black text-slate-800 mb-3">RM${valueRM.toLocaleString()}/month</p>
-                    <p class="text-sm text-slate-600 leading-relaxed">${vp.description}</p>
-                `;
-                vpContainer.appendChild(card);
-            });
-
-        } catch (error) {
-            console.error('Error loading dashboard summary:', error);
+                        <p class="text-3xl font-black text-slate-800 mb-3">RM${scaledValue.toLocaleString()}/month</p>
+                        <p class="text-sm text-slate-600 leading-relaxed">${vp.description}</p>
+                    `;
+                    vpContainer.appendChild(card);
+                });
+            } catch (error) {
+                console.error('Error loading dashboard summary:', error);
+                document.getElementById('monthlySavings').textContent = 'Error';
+                document.getElementById('annualSavings').textContent = 'Error';
+            }
         }
-    }
 
-    async function loadDetailedMetrics() {
-        try {
-            // Load stockout prevention metrics
-            const stockoutResponse = await fetch('/api/metrics/stockout-prevention');
-            const stockoutData = await stockoutResponse.json();
+        async function loadDetailedMetrics() {
+            try {
+                // Load stockout prevention metrics
+                const stockoutResponse = await fetch('/api/metrics/stockout-prevention');
+                if (!stockoutResponse.ok) throw new Error('Stockout API failed');
+                const stockoutData = await stockoutResponse.json();
+                
+                console.log('Stockout data:', stockoutData);
+                
+                // Show fill rates (inverse of stockout rate)
+                const fillRateWithout = (100 - stockoutData.stockout_rate_without_forecast).toFixed(1);
+                const fillRateWith = (100 - stockoutData.stockout_rate_with_forecast).toFixed(1);
+                
+                document.getElementById('stockoutRateWithout').textContent = fillRateWithout + '%';
+                document.getElementById('stockoutRateWith').textContent = fillRateWith + '%';
+                document.getElementById('stockoutImprovement').textContent = 
+                    stockoutData.improvement_percentage.toFixed(1) + '%';
 
-            document.getElementById('productsAtRisk').textContent = stockoutData.products_at_risk;
-            document.getElementById('stockoutRateWithout').textContent = stockoutData.stockout_rate_without_forecast.toFixed(1) + '%';
-            document.getElementById('stockoutRateWith').textContent = stockoutData.stockout_rate_with_forecast.toFixed(1) + '%';
-            document.getElementById('stockoutImprovement').textContent = stockoutData.improvement_percentage.toFixed(1) + '%';
+                // Load inventory efficiency metrics
+                const inventoryResponse = await fetch('/api/metrics/inventory-efficiency');
+                if (!inventoryResponse.ok) throw new Error('Inventory API failed');
+                const inventoryData = await inventoryResponse.json();
+                
+                console.log('Inventory data:', inventoryData);
+                
+                // Use QUANTITY-BASED metrics
+                const totalUnits = Math.round(inventoryData.total_units_stocked * CURRENT_SCALE);
+                const optimalUnits = Math.round(inventoryData.total_optimal_units * CURRENT_SCALE);
+                const excessUnits = Math.round(inventoryData.units_overstocked * CURRENT_SCALE);
+                
+                // BEFORE scenario (everything overstocked)
+                document.getElementById('overstockedBefore').textContent = totalUnits.toLocaleString();
+                document.getElementById('optimalBefore').textContent = '0';
+                document.getElementById('efficiencyBefore').textContent = '0%';
+                
+                // AFTER scenario (optimized)
+                document.getElementById('overstockedAfter').textContent = excessUnits.toLocaleString();
+                document.getElementById('optimalAfter').textContent = (totalUnits - excessUnits).toLocaleString();
+                document.getElementById('efficiencyAfter').textContent = 
+                    inventoryData.optimal_rate_units.toFixed(0) + '%';
+                document.getElementById('inventoryImprovement').textContent = 
+                    inventoryData.optimal_rate_units.toFixed(0) + '%';
+                
+                const carryingCost = Math.round(inventoryData.monthly_carrying_cost_saved * CURRENT_SCALE * 4.47);
+                document.getElementById('carryingCostSaved').textContent = 'RM' + carryingCost.toLocaleString();
+                
+                // Load forecast accuracy
+                const forecastResponse = await fetch('/api/metrics/forecast-accuracy');
+                if (!forecastResponse.ok) throw new Error('Forecast API failed');
+                const forecastData = await forecastResponse.json();
+                
+                document.getElementById('mapeValue').textContent = forecastData.average_mape.toFixed(1) + '%';
+                document.getElementById('accuracyRate').textContent = forecastData.accuracy_rate.toFixed(1) + '%';
+                document.getElementById('productsEvaluated').textContent = Math.round(forecastData.products_evaluated * CURRENT_SCALE);
+                document.getElementById('forecastQuality').textContent = forecastData.forecast_quality;
 
-            // Load inventory efficiency metrics
-            const inventoryResponse = await fetch('/api/metrics/inventory-efficiency');
-            const inventoryData = await inventoryResponse.json();
-
-            document.getElementById('overstockedCount').textContent = inventoryData.overstocked_products;
-            document.getElementById('understockedCount').textContent = inventoryData.understocked_products;
-            document.getElementById('optimalCount').textContent = inventoryData.optimal_products;
-            
-            // Convert to RM (multiply by 4.47)
-            const carryingCostRM = Math.round(inventoryData.monthly_carrying_cost_saved * USD_TO_MYR);
-            document.getElementById('carryingCostSaved').textContent = 'RM' + carryingCostRM.toLocaleString();
-
-            // Load forecast accuracy metrics
-            const forecastResponse = await fetch('/api/metrics/forecast-accuracy');
-            const forecastData = await forecastResponse.json();
-
-            document.getElementById('mapeValue').textContent = forecastData.average_mape.toFixed(1) + '%';
-            document.getElementById('accuracyRate').textContent = forecastData.accuracy_rate.toFixed(1) + '%';
-            document.getElementById('productsEvaluated').textContent = forecastData.products_evaluated;
-            document.getElementById('forecastQuality').textContent = forecastData.forecast_quality;
-
-            // Load ROI summary
-            const roiResponse = await fetch('/api/metrics/roi-summary');
-            const roiData = await roiResponse.json();
-
-            // Convert all to RM (multiply by 4.47)
-            const revenueProtectedRM = Math.round(roiData.monthly_impact.revenue_protected * USD_TO_MYR);
-            const costsReducedRM = Math.round(roiData.monthly_impact.carrying_cost_saved * USD_TO_MYR);
-            const emergencySavedRM = Math.round(roiData.monthly_impact.emergency_order_cost_saved * USD_TO_MYR);
-
-            document.getElementById('revenueProtected').textContent = 'RM' + revenueProtectedRM.toLocaleString();
-            document.getElementById('costsReduced').textContent = 'RM' + costsReducedRM.toLocaleString();
-            document.getElementById('emergencyCostSaved').textContent = 'RM' + emergencySavedRM.toLocaleString();
-
-        } catch (error) {
-            console.error('Error loading detailed metrics:', error);
+                // Load ROI summary
+                const roiResponse = await fetch('/api/metrics/roi-summary');
+                if (!roiResponse.ok) throw new Error('ROI API failed');
+                const roiData = await roiResponse.json();
+                
+                const revenueProtected = Math.round(roiData.monthly_impact.revenue_protected * CURRENT_SCALE);
+                const costsReduced = Math.round(roiData.monthly_impact.carrying_cost_saved * CURRENT_SCALE);
+                const emergencySaved = Math.round(roiData.monthly_impact.emergency_order_cost_saved * CURRENT_SCALE);
+                
+                document.getElementById('revenueProtected').textContent = 'RM' + revenueProtected.toLocaleString();
+                document.getElementById('costsReduced').textContent = 'RM' + costsReduced.toLocaleString();
+                document.getElementById('emergencyCostSaved').textContent = 'RM' + emergencySaved.toLocaleString();
+                
+            } catch (error) {
+                console.error('Error loading detailed metrics:', error);
+            }
         }
-    }
-</script>
+    </script>
 </body>
 </html>
