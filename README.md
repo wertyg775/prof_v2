@@ -70,6 +70,12 @@ Link to Presentation Slides : https://www.canva.com/design/DAGjgfRWS2M/2YxDBhKUe
    - After fitting on the full history with the best hyperparameters, we sample model residuals 1,000 times and add them to the deterministic forecast.  
    - Percentiles (2.5/10/90/97.5) create robust 80% and 95% intervals, which downstream services use for restock alerts, anomaly thresholds, and ROI math.
 
+Bess Models Accuracy for each product (After hyperparameter tuning using rolling cross validation
+
+<img width="446" height="279" alt="image" src="https://github.com/user-attachments/assets/cf7942ee-89b0-46dd-90ae-ddd5af1c5166" />
+
+  
+
 ---
 
 ## 🧩 Data Flow Highlights
