@@ -4,6 +4,21 @@ A full-stack FastAPI application that fuses real sales data, ML forecasts, and L
 
 ---
 
+## App Snippets
+
+<img width="1911" height="878" alt="image" src="https://github.com/user-attachments/assets/436e1a9b-8d4f-425d-ab7e-4c3d65f75b06" />
+<img width="1614" height="875" alt="image" src="https://github.com/user-attachments/assets/4e687ebd-b868-49b4-8c05-7f3da04b9465" />
+<img width="1495" height="865" alt="image" src="https://github.com/user-attachments/assets/9c702b22-0e2a-496b-8579-3e24d6ecff0a" />
+<img width="1524" height="873" alt="image" src="https://github.com/user-attachments/assets/2b50150c-3fbc-4b5d-ab8e-e9122e16578e" />
+<img width="1558" height="874" alt="image" src="https://github.com/user-attachments/assets/8e754895-ab12-4fdb-93b8-443490280a34" />
+<img width="1587" height="877" alt="image" src="https://github.com/user-attachments/assets/32987ac7-8014-43c9-aed9-9e692473a0b1" />
+
+
+
+
+
+
+
 ## 🌟 Flagship Experiences
 
 - **Analytics Command Center (`analytics.html`)**  
