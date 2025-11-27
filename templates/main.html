@@ -60,6 +60,11 @@
                         <i class="fa-solid fa-circle text-emerald-500 text-[8px] mr-1 animate-pulse"></i> Live Forecast
                     </span>
 
+                    <!-- Demo Toggle Button - MADE MORE VISIBLE -->
+                    <button onclick="toggleDemoControls()" class="flex items-center gap-2 px-4 py-2 bg-indigo-500 text-white text-xs font-bold rounded-lg hover:bg-indigo-600 transition-colors shadow-md">
+                        <i class="fa-solid fa-flask"></i> Demo
+                    </button>
+
                     <!-- Notification Bell System -->
                     <div class="relative">
                         <button id="notify-btn" class="relative p-2 text-slate-500 hover:text-blue-600 hover:bg-slate-100 rounded-full transition-all duration-200 focus:outline-none">
@@ -143,13 +148,101 @@
         </div>
     </footer>
 
+    <!-- Demo Control Panel -->
+    <div id="demoControls" class="fixed bottom-4 right-4 bg-white rounded-xl shadow-2xl p-6 border-2 border-indigo-500 hidden z-50" style="max-width: 320px;">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="font-bold text-lg text-indigo-600">🎮 Demo Controls</h3>
+            <button onclick="toggleDemoControls()" class="text-slate-400 hover:text-slate-600">
+                <i class="fa-solid fa-times"></i>
+            </button>
+        </div>
+        
+        <div class="space-y-4">
+            <!-- Product Selector -->
+            <div>
+                <label class="text-xs font-bold text-slate-600 mb-1 block">Select Product</label>
+                <select id="demoProduct" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm">
+                    <option value="Road Tire Tube">Road Tire Tube</option>
+                    <option value="Mountain Tire Tube">Mountain Tire Tube</option>
+                    <option value="Water Bottle - 30 oz.">Water Bottle - 30 oz.</option>
+                    <option value="Patch Kit/8 Patches">Patch Kit/8 Patches</option>
+                    <option value="Mountain Bottle Cage">Mountain Bottle Cage</option>
+                </select>
+            </div>
+            
+            <!-- Spike Multiplier -->
+            <div>
+                <label class="text-xs font-bold text-slate-600 mb-1 block">Demand Spike (x normal)</label>
+                <input type="range" id="spikeMultiplier" min="1.5" max="5" step="0.5" value="2" 
+                    class="w-full" oninput="document.getElementById('multiplierValue').textContent = this.value + 'x'">
+                <span id="multiplierValue" class="text-xs text-slate-500">2x</span>
+            </div>
+            
+            <!-- ADD THIS TEST BUTTON -->
+            <button onclick="testAnomalyStatus()" 
+                    class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                🔍 Test Anomaly Status
+            </button>
+            
+            <!-- Trigger Buttons -->
+            <button onclick="triggerAnomaly()" 
+                    class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                🚨 Trigger Demand Spike
+            </button>
+            
+            <button onclick="clearAnomaly()" 
+                    class="w-full bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-2 px-4 rounded-lg transition-colors">
+                ✅ Clear Anomaly
+            </button>
+        </div>
+        
+        <div class="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+            <p class="text-xs text-blue-800">
+                <i class="fa-solid fa-info-circle mr-1"></i>
+                <strong>Demo Mode:</strong> Simulates demand spike for presentation
+            </p>
+        </div>
+    </div>
+
+    <!-- Anomaly Details Panel -->
+    <div id="anomalyPanel" class="hidden fixed top-20 right-4 bg-white rounded-2xl shadow-2xl p-6 border-2 border-red-500 z-50 max-w-md">
+        <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-3">
+                <div class="bg-red-500 text-white p-2 rounded-lg animate-pulse">
+                    <i class="fa-solid fa-exclamation-triangle text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-lg text-red-600">Demand Spike Detected</h3>
+                    <p class="text-xs text-slate-500">AI Anomaly Detection Alert</p>
+                </div>
+            </div>
+            <button onclick="closeAnomalyPanel()" class="text-slate-400 hover:text-slate-600">
+                <i class="fa-solid fa-times"></i>
+            </button>
+        </div>
+
+        <!-- Anomaly Data Container -->
+        <div id="anomalyData" class="space-y-4">
+            <!-- Will be populated by JavaScript -->
+        </div>
+
+        <div class="mt-6 pt-4 border-t border-slate-200">
+            <button onclick="viewAnomalyProduct()" class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-4 rounded-lg transition-colors">
+                View Product Details
+            </button>
+        </div>
+    </div>
+
     <!-- Logic -->
     <script>
+        // ========================================
+        // NOTIFICATION TOGGLE
+        // ========================================
         document.addEventListener('DOMContentLoaded', async () => {
             const grid = document.getElementById('product-grid');
             const loader = document.getElementById('loading-indicator');
 
-            // --- Notification Toggle Logic ---
+            // Notification Toggle Logic
             const notifyBtn = document.getElementById('notify-btn');
             const notifyDropdown = document.getElementById('notify-dropdown');
 
@@ -158,20 +251,18 @@
                 notifyDropdown.classList.toggle('hidden');
             });
 
-            // Close dropdown if clicked outside
             document.addEventListener('click', (e) => {
                 if (!notifyBtn.contains(e.target) && !notifyDropdown.contains(e.target)) {
                     notifyDropdown.classList.add('hidden');
                 }
             });
-            // ----------------------------------
 
             try {
-                // 1. Get List of Products
+                // Get List of Products
                 const response = await fetch('/get_unique_products');
                 const products = await response.json();
 
-                // 2. Fetch details for all products in parallel
+                // Fetch details for all products in parallel
                 const productPromises = products.map(async (productName) => {
                     try {
                         const encoded = encodeURIComponent(productName);
@@ -193,7 +284,7 @@
 
                 const results = await Promise.all(productPromises);
 
-                // 3. Render
+                // Render
                 loader.classList.add('hidden');
                 grid.classList.remove('hidden');
 
@@ -209,14 +300,254 @@
             }
         });
 
+        // ========================================
+        // DEMO CONTROLS
+        // ========================================
+        
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === 'd') {
+                e.preventDefault();
+                toggleDemoControls();
+            }
+        });
+        
+        function toggleDemoControls() {
+            const panel = document.getElementById('demoControls');
+            panel.classList.toggle('hidden');
+        }
+        
+        async function triggerAnomaly() {
+            const product = document.getElementById('demoProduct').value;
+            const multiplier = document.getElementById('spikeMultiplier').value;
+            
+            try {
+                const response = await fetch(`/api/anomaly/trigger-spike?product=${encodeURIComponent(product)}&multiplier=${multiplier}`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                alert(`✅ Anomaly Triggered!\n\n${product} now shows ${multiplier}x demand spike.\n\nRefreshing to show alert...`);
+                location.reload();
+                
+            } catch (error) {
+                alert('❌ Error: ' + error);
+            }
+        }
+        
+        async function clearAnomaly() {
+            try {
+                const response = await fetch('/api/anomaly/clear-spike', {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                alert('✅ Anomaly cleared! System back to normal.');
+                location.reload();
+                
+            } catch (error) {
+                alert('❌ Error: ' + error);
+            }
+        }
+
+        // ADD THIS NEW FUNCTION
+        async function testAnomalyStatus() {
+            const product = document.getElementById('demoProduct').value;
+            
+            try {
+                const response = await fetch(`/api/anomaly/demand-spike?product=${encodeURIComponent(product)}`);
+                const data = await response.json();
+                
+                let message = `Product: ${product}\n\n`;
+                message += `Is Anomaly: ${data.is_anomaly}\n`;
+                message += `Is Simulated: ${data.is_simulated}\n`;
+                message += `Spike %: ${data.spike_percentage}%\n`;
+                message += `Risk Level: ${data.risk_level}\n`;
+                message += `Actual Sales: ${data.actual_sales}\n`;
+                message += `Expected Max: ${data.expected_max}`;
+                
+                alert(message);
+            } catch (error) {
+                alert('Error testing anomaly: ' + error);
+            }
+        }
+
+        // ========================================
+        // ANOMALY PANEL FUNCTIONS
+        // ========================================
+// ========================================
+// ANOMALY PANEL FUNCTIONS
+// ========================================
+
+let currentAnomalyProduct = null;
+
+function closeAnomalyPanel() {
+    document.getElementById('anomalyPanel').classList.add('hidden');
+}
+
+function viewAnomalyProduct() {
+    if (currentAnomalyProduct) {
+        window.location.href = `/details_page?product=${encodeURIComponent(currentAnomalyProduct)}`;
+    }
+}
+
+async function showAnomalyDetails(productName) {
+    try {
+        const response = await fetch(`/api/anomaly/demand-spike?product=${encodeURIComponent(productName)}`);
+        const data = await response.json();
+
+        if (!data.is_anomaly) {
+            return;
+        }
+
+        currentAnomalyProduct = productName;
+
+        const panel = document.getElementById('anomalyPanel');
+        const dataContainer = document.getElementById('anomalyData');
+
+        dataContainer.innerHTML = `
+            <!-- Product Info -->
+            <div class="bg-slate-50 rounded-xl p-4 border border-slate-200">
+                <p class="text-sm font-bold text-slate-800 mb-2">${productName}</p>
+                ${data.is_simulated ? `
+                    <span class="inline-flex items-center gap-1 text-xs font-bold bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
+                        <i class="fa-solid fa-flask"></i> Demo Mode Active
+                    </span>
+                ` : ''}
+            </div>
+
+            <!-- Alert Level -->
+            <div class="flex items-center justify-between p-4 rounded-xl ${
+                data.risk_level === 'CRITICAL' ? 'bg-red-100 border-2 border-red-500' : 
+                data.risk_level === 'HIGH' ? 'bg-orange-100 border-2 border-orange-500' : 
+                'bg-yellow-100 border-2 border-yellow-500'
+            }">
+                <span class="text-sm font-bold ${
+                    data.risk_level === 'CRITICAL' ? 'text-red-700' : 
+                    data.risk_level === 'HIGH' ? 'text-orange-700' : 
+                    'text-yellow-700'
+                }">Risk Level</span>
+                <span class="text-xl font-black ${
+                    data.risk_level === 'CRITICAL' ? 'text-red-700' : 
+                    data.risk_level === 'HIGH' ? 'text-orange-700' : 
+                    'text-yellow-700'
+                }">${data.risk_level}</span>
+            </div>
+
+            <!-- Metrics Grid -->
+            <div class="grid grid-cols-2 gap-3">
+                <div class="bg-slate-50 rounded-lg p-3 border border-slate-200">
+                    <p class="text-[10px] text-slate-500 font-bold uppercase mb-1">Actual Sales</p>
+                    <p class="text-2xl font-black text-slate-800">${data.actual_sales}</p>
+                    <p class="text-[9px] text-slate-400">units/week</p>
+                </div>
+
+                <div class="bg-slate-50 rounded-lg p-3 border border-slate-200">
+                    <p class="text-[10px] text-slate-500 font-bold uppercase mb-1">Expected Max</p>
+                    <p class="text-2xl font-black text-slate-800">${data.expected_max}</p>
+                    <p class="text-[9px] text-slate-400">units/week</p>
+                </div>
+
+                <div class="bg-red-50 rounded-lg p-3 border border-red-200 col-span-2">
+                    <p class="text-[10px] text-red-600 font-bold uppercase mb-1">Spike Percentage</p>
+                    <p class="text-3xl font-black text-red-600">+${data.spike_percentage.toFixed(1)}%</p>
+                    <p class="text-[9px] text-red-500">above forecast</p>
+                </div>
+            </div>
+
+            <!-- Stock Status -->
+            <div class="bg-gradient-to-r from-orange-50 to-red-50 rounded-xl p-4 border-2 border-orange-300">
+                <div class="flex items-center gap-2 mb-2">
+                    <i class="fa-solid fa-warehouse text-orange-600"></i>
+                    <p class="text-xs font-bold text-orange-800">Inventory Status</p>
+                </div>
+                <p class="text-sm text-slate-700 mb-2">Current Stock: <strong class="text-orange-700">${data.current_stock} units</strong></p>
+                ${data.stock_shortage > 0 ? `
+                    <p class="text-sm text-red-700 font-bold">⚠️ Shortage: ${data.stock_shortage} units</p>
+                ` : `
+                    <p class="text-sm text-green-700 font-bold">✅ Sufficient stock</p>
+                `}
+            </div>
+
+            <!-- Financial Impact -->
+            ${data.financial_impact.potential_lost_sales_units > 0 ? `
+            <div class="bg-rose-50 rounded-xl p-4 border-2 border-rose-300">
+                <div class="flex items-center gap-2 mb-2">
+                    <i class="fa-solid fa-coins text-rose-600"></i>
+                    <p class="text-xs font-bold text-rose-800">Financial Impact</p>
+                </div>
+                <p class="text-sm text-slate-700 mb-1">Potential Lost Sales</p>
+                <p class="text-2xl font-black text-rose-600">RM ${data.financial_impact.estimated_revenue_loss_myr.toLocaleString()}</p>
+            </div>
+            ` : ''}
+
+            <!-- Recommended Action -->
+            <div class="bg-indigo-50 rounded-xl p-4 border-2 border-indigo-300">
+                <div class="flex items-center gap-2 mb-2">
+                    <i class="fa-solid fa-lightbulb text-indigo-600"></i>
+                    <p class="text-xs font-bold text-indigo-800">AI Recommendation</p>
+                </div>
+                <p class="text-sm text-slate-700 leading-relaxed">${data.recommended_action}</p>
+            </div>
+        `;
+
+        panel.classList.remove('hidden');
+
+    } catch (error) {
+        console.error('Error loading anomaly details:', error);
+    }
+}
+
+// ========================================
+// ANOMALY CHECK ON PAGE LOAD
+// ========================================
+
+async function checkAnomalies() {
+    const products = Array.from(document.querySelectorAll('[data-product]'));
+    let firstAnomaly = null;
+    
+    for (const card of products) {
+        const productName = card.getAttribute('data-product');
+        
+        try {
+            const response = await fetch(`/api/anomaly/demand-spike?product=${encodeURIComponent(productName)}`);
+            const anomalyData = await response.json();
+            
+            if (anomalyData.is_anomaly) {
+                const badge = document.createElement('div');
+                badge.className = 'absolute top-0 left-0 p-3 z-20 cursor-pointer';
+                badge.onclick = () => showAnomalyDetails(productName);
+                badge.innerHTML = `
+                    <span class="flex items-center gap-1.5 bg-red-600 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-lg animate-pulse hover:bg-red-700 transition-colors">
+                        <i class="fa-solid fa-bolt"></i> DEMAND SPIKE +${anomalyData.spike_percentage.toFixed(0)}%
+                    </span>
+                `;
+                card.insertBefore(badge, card.firstChild);
+
+                if (!firstAnomaly) {
+                    firstAnomaly = productName;
+                }
+            }
+        } catch (error) {
+            console.error(`Error checking anomaly for ${productName}:`, error);
+        }
+    }
+
+    if (firstAnomaly) {
+        setTimeout(() => showAnomalyDetails(firstAnomaly), 1000);
+    }
+}
+
+setTimeout(checkAnomalies, 2000);
+        // ========================================
+        // CREATE PRODUCT CARD
+        // ========================================
+
         function createCard(productName, trend, stock) {
             const status = trend.prediction_status;
             const needsRestock = stock.need_restock;
             
-            // Encode product name for URL
             const productUrl = `/details_page?product=${encodeURIComponent(productName)}`;
 
-            // --- Theme Logic ---
             let theme = {
                 border: 'border-amber-100',
                 badgeBg: 'bg-amber-50',
@@ -255,18 +586,16 @@
                 };
             }
 
-            // Formatting Numbers
             const sales = parseFloat(trend.last_4_weeks_sale).toFixed(0);
             const lower = parseFloat(trend.forecast_lower_limit).toFixed(0);
             const upper = parseFloat(trend.forecast_upper_limit).toFixed(0);
             const currentStock = stock.Stocks;
 
-            // Restock Styling Overrides
             const stockTextColor = needsRestock ? 'text-red-600' : 'text-slate-700';
             const borderClass = needsRestock ? 'border-red-300 ring-1 ring-red-100' : theme.border;
 
             return `
-            <div class="group relative bg-white rounded-2xl p-5 border ${borderClass} 
+            <div data-product="${productName}" class="group relative bg-white rounded-2xl p-5 border ${borderClass} 
                         transition-all duration-300 ease-out 
                         hover:-translate-y-1 ${theme.shadowBase} ${theme.shadowHover} overflow-hidden flex flex-col h-full">
                 

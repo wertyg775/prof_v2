@@ -27,6 +27,13 @@ load_dotenv()
 import psycopg2
 import pandas as pd
 
+# Add this state variable at the top of main.py
+ANOMALY_SIMULATION = {
+    "active": False,
+    "product": None,
+    "multiplier": 2.0  # 2x normal demand
+}
+
 # ============ DATABASE CONNECTION MANAGEMENT ============
 
 def get_db_connection():
@@ -874,4 +881,129 @@ async def get_metric_assumptions():
             "description": "Based on industry averages for rush orders"
         },
         "note": "Revenue and inventory costs now use actual product prices from your database!"
+    }
+
+# ============ ANOMALY DETECTION SYSTEM ============
+
+# Global state for demo simulation
+ANOMALY_SIMULATION = {
+    "active": False,
+    "product": None,
+    "multiplier": 2.0
+}
+
+@app.post("/api/anomaly/trigger-spike")
+async def trigger_demand_spike(product: str, multiplier: float = 2.0):
+    """Manually trigger a demand spike for demo purposes"""
+    global ANOMALY_SIMULATION
+    
+    ANOMALY_SIMULATION = {
+        "active": True,
+        "product": product,
+        "multiplier": multiplier
+    }
+    
+    return {
+        "status": "Anomaly triggered",
+        "product": product,
+        "simulated_spike": f"{multiplier}x normal demand",
+        "message": f"System will now detect {product} as having abnormal demand spike"
+    }
+
+@app.post("/api/anomaly/clear-spike")
+async def clear_demand_spike():
+    """Clear the simulated anomaly"""
+    global ANOMALY_SIMULATION
+    
+    ANOMALY_SIMULATION = {
+        "active": False,
+        "product": None,
+        "multiplier": 1.0
+    }
+    
+    return {"status": "Anomaly cleared", "message": "System back to normal"}
+
+@app.get("/api/anomaly/demand-spike")
+async def detect_demand_spike(product: str):
+    """Detect unusual demand spikes (with simulation support)"""
+    try:
+        forecast_info = increase_or_decrease(product)
+        sales_data = top_10_products_ts[top_10_products_ts["ProductName"] == product]
+        
+        if sales_data.empty:
+            raise HTTPException(404, f"Product '{product}' not found")
+        
+        # Get actual last week sales
+        last_week_sales = int(sales_data.iloc[-1]["sum"])
+        
+        # SIMULATION LOGIC: If this product has triggered anomaly, multiply the sales
+        if ANOMALY_SIMULATION["active"] and ANOMALY_SIMULATION["product"] == product:
+            simulated_sales = int(last_week_sales * ANOMALY_SIMULATION["multiplier"])
+            is_simulated = True
+        else:
+            simulated_sales = last_week_sales
+            is_simulated = False
+        
+        # Calculate thresholds
+        forecast_upper = forecast_info["forecast_upper_limit"] / 4  # Weekly average
+        spike_threshold = forecast_upper * 1.2  # 50% above forecast = anomaly
+        
+        # Detect anomaly
+        is_anomaly = simulated_sales > spike_threshold
+        severity = ((simulated_sales - forecast_upper) / forecast_upper * 100) if is_anomaly else 0
+        
+        # Calculate impact
+        excess_demand = max(0, simulated_sales - forecast_upper)
+        stock_info = await restock_or_not(product)
+        current_stock = stock_info["Stocks"]
+        
+        # Check if we have enough stock to meet this spike
+        stock_shortage = max(0, simulated_sales - current_stock)
+        
+        return {
+            "product": product,
+            "is_anomaly": is_anomaly,
+            "is_simulated": is_simulated,
+            "actual_sales": simulated_sales,
+            "normal_sales": last_week_sales,
+            "expected_max": int(forecast_upper),
+            "spike_threshold": int(spike_threshold),
+            "spike_percentage": round(severity, 1),
+            "excess_demand": int(excess_demand),
+            "current_stock": current_stock,
+            "stock_shortage": int(stock_shortage),
+            "risk_level": "CRITICAL" if severity > 100 else "HIGH" if severity > 50 else "NORMAL",
+            "financial_impact": {
+                "potential_lost_sales_units": int(stock_shortage),
+                "estimated_revenue_loss_myr": round(stock_shortage * 50 * 4.47, 2)
+            },
+            "recommended_action": 
+                f"🚨 EMERGENCY RESTOCK: Order {int(stock_shortage + excess_demand)} units immediately" if stock_shortage > 0
+                else f"⚠️ INCREASE ORDER: Prepare {int(excess_demand)} extra units" if is_anomaly
+                else "✅ No action needed - Stock sufficient"
+        }
+        
+    except Exception as e:
+        print(f"Error in demand spike detection: {e}")
+        raise HTTPException(500, str(e))
+
+@app.get("/api/anomaly/scan-all")
+async def scan_all_products():
+    """Scan all products for demand anomalies"""
+    products = top_10_products_ts["ProductName"].unique()
+    anomalies = []
+    
+    for product in products:
+        try:
+            result = await detect_demand_spike(product)
+            if result["is_anomaly"]:
+                anomalies.append(result)
+        except:
+            continue
+    
+    return {
+        "total_products_scanned": len(products),
+        "anomalies_detected": len(anomalies),
+        "critical_alerts": [a for a in anomalies if a["risk_level"] == "CRITICAL"],
+        "all_anomalies": sorted(anomalies, key=lambda x: x["spike_percentage"], reverse=True)
     }
