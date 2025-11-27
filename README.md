@@ -5,6 +5,7 @@ A full-stack FastAPI application that fuses real sales data, ML forecasts, and L
 Link to Youtube Video : https://youtu.be/HSBnO5RQTHU
 
 Link to Canva Slides : https://www.canva.com/design/DAGjgfRWS2M/2YxDBhKUebr9eVRS-g-ENA/edit
+
 ---
 
 ## App Snippets
