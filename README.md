@@ -2,9 +2,9 @@
 
 A full-stack FastAPI application that fuses real sales data, ML forecasts, and LLM copilots to supercharge AdventureWorks’ day-to-day operations. From answering ad-hoc analytics questions to preventing stockouts and simulating demand shocks, everything runs from a single command: `uvicorn main:app --reload`.
 
-Link to Youtube Video : https://youtu.be/HSBnO5RQTHU
+Link to Video Demonstration: https://youtu.be/HSBnO5RQTHU
 
-Link to Canva Slides : https://www.canva.com/design/DAGjgfRWS2M/2YxDBhKUebr9eVRS-g-ENA/edit
+Link to Presentation Slides : https://www.canva.com/design/DAGjgfRWS2M/2YxDBhKUebr9eVRS-g-ENA/edit
 
 ---
 
